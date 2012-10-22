@@ -19,9 +19,15 @@ module Socialcast
 
       # lookup the current repository of the PWD
       # ex: git@github.com:socialcast/socialcast-git-extensions.git
+      # ex: https://github.com/socialcast/socialcast-git-extensions.git
       def current_repo
-        repo = `git config -z --get remote.origin.url`.strip
-        repo.scan(/:(.+\/.+)\./).first.first
+        origin_repo_url = `git config -z --get remote.origin.url`.strip
+        repo = if origin_repo_url.include?('https://github.com/')
+          origin_repo_url.scan(/https:\/\/github.com\/(.+\/.+)\./)
+        else
+          origin_repo_url.scan(/:(.+\/.+)\./)
+        end
+        repo.first.first
       end
 
       # retrieve a list of branches
