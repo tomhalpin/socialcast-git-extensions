@@ -24,6 +24,11 @@ module Socialcast
         repo.gsub(/\.git$/,'').split(/[:\/]/).last(2).join('/')
       end
 
+      def current_repo_name
+        repo = `git config -z --get remote.origin.url`.strip
+        repo.gsub(/\.git$/,'').split(/[:\/]/).last
+      end
+
       # retrieve a list of branches
       def branches(options = {})
         branches = []
