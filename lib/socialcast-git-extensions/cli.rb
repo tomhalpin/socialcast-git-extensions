@@ -39,8 +39,8 @@ module Socialcast
         say "Pull request created: #{url}"
 
         short_description = description.split("\n").first(5).join("\n")
-        project = Socialcast:Gitx:Git.current_repo
-        review_message = ["#reviewrequest for #{branch} in ##{project} #scgitx", "/cc @RD", short_description, changelog_summary(branch)].join("\n\n")
+        
+        review_message = ["#reviewrequest for #{branch} in ##{Socialcast::Gitx::Git.current_repo} #scgitx", "/cc @RD", short_description, changelog_summary(branch)].join("\n\n")
         post review_message, :url => url, :message_type => 'review_request'
       end
 
@@ -99,8 +99,7 @@ module Socialcast
         run_cmd 'git pull'
         run_cmd "git checkout -b #{branch_name}"
 
-        project = File.basename(Dir.pwd)
-        post "#worklog starting work on #{branch_name} for ##{project} #scgitx"
+        post "#worklog starting work on #{branch_name} for ##{Socialcast::Gitx::Git.current_repot} #scgitx"
       end
 
       desc 'share', 'Share the current branch in the remote repository'
@@ -117,8 +116,7 @@ module Socialcast
         integrate_branch(target_branch, 'prototype') if target_branch == 'staging'
         run_cmd "git checkout #{branch}"
 
-        project = Socialcast:Gitx:Git.current_repo
-        post "#worklog integrating #{branch} into #{target_branch} for ##{project} #scgitx"
+        post "#worklog integrating #{branch} into #{target_branch} for ##{Socialcast::Gitx::Git.current_repo} #scgitx"
       end
 
       desc 'promote', '(DEPRECATED) promote the current branch into staging'
@@ -138,9 +136,8 @@ module Socialcast
         removed_branches = nuke_branch(bad_branch, good_branch)
         nuke_branch("last_known_good_#{bad_branch}", good_branch)
 
-        project = Socialcast:Gitx:Git.current_repo
         message_parts = []
-        message_parts << "#worklog resetting #{bad_branch} branch to #{good_branch} in ##{project} #scgitx"
+        message_parts << "#worklog resetting #{bad_branch} branch to #{good_branch} in ##{Socialcast::Gitx::Git.current_repo} #scgitx"
         message_parts << "/cc @SocialcastDevelopers"
         if removed_branches.any?
           message_parts << ""
@@ -165,8 +162,7 @@ module Socialcast
         integrate_branch('master', 'staging')
         cleanup
 
-        project = Socialcast:Gitx:Git.current_repo
-        post "#worklog releasing #{branch} to production for ##{project} #scgitx"
+        post "#worklog releasing #{branch} to production for ##{Socialcast::Gitx::Git.current_repot} #scgitx"
       end
 
       private
