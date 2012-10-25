@@ -38,9 +38,10 @@ module Socialcast
         url = create_pull_request token, branch, repo, description
         say "Pull request created: #{url}"
 
+        project = current_repo_name
         short_description = description.split("\n").first(5).join("\n")
         
-        review_message = ["#reviewrequest for #{branch} in ##{repo} #scgitx", "/cc @RD", short_description, changelog_summary(branch)].join("\n\n")
+        review_message = ["#reviewrequest for #{branch} in ##{project} #scgitx", "/cc @RD", short_description, changelog_summary(branch)].join("\n\n")
         post review_message, :url => url, :message_type => 'review_request'
       end
 
@@ -98,8 +99,8 @@ module Socialcast
         run_cmd "git checkout #{Socialcast::Gitx::BASE_BRANCH}"
         run_cmd 'git pull'
         run_cmd "git checkout -b #{branch_name}"
-        repo = current_repo
-        post "#worklog starting work on #{branch_name} for ##{repo} #scgitx"
+        project = current_repo_name
+        post "#worklog starting work on #{branch_name} for ##{project} #scgitx"
       end
 
       desc 'share', 'Share the current branch in the remote repository'
@@ -110,14 +111,14 @@ module Socialcast
       desc 'integrate', 'integrate the current branch into one of the aggregate development branches'
       def integrate(target_branch = 'prototype')
         branch = current_branch
-        repo = current_repo
+        project = current_repo_name
 
         update
         integrate_branch(branch, target_branch)
         integrate_branch(target_branch, 'prototype') if target_branch == 'staging'
         run_cmd "git checkout #{branch}"
 
-        post "#worklog integrating #{branch} into #{target_branch} for ##{repo} #scgitx"
+        post "#worklog integrating #{branch} into #{target_branch} for ##{project} #scgitx"
       end
 
       desc 'promote', '(DEPRECATED) promote the current branch into staging'
@@ -133,13 +134,13 @@ module Socialcast
         good_branch = options[:destination] || ask("What branch do you want to reset #{bad_branch} to? (default: #{default_good_branch})")
         good_branch = default_good_branch if good_branch.length == 0
         good_branch = "last_known_good_#{good_branch}" unless good_branch.starts_with?('last_known_good_')
-        repo = current_repo
+        project = current_repo_name
 
         removed_branches = nuke_branch(bad_branch, good_branch)
         nuke_branch("last_known_good_#{bad_branch}", good_branch)
 
         message_parts = []
-        message_parts << "#worklog resetting #{bad_branch} branch to #{good_branch} in ##{repo} #scgitx"
+        message_parts << "#worklog resetting #{bad_branch} branch to #{good_branch} in ##{project} #scgitx"
         message_parts << "/cc @RD"
         if removed_branches.any?
           message_parts << ""
@@ -153,7 +154,7 @@ module Socialcast
       def release
         branch = current_branch
         assert_not_protected_branch!(branch, 'release')
-        repo = current_repo
+        project = current_repo_name
 
         return unless yes?("Release #{branch} to production? (y/n)", :green)
 
@@ -165,7 +166,7 @@ module Socialcast
         integrate_branch('master', 'staging')
         cleanup
 
-        post "#worklog releasing #{branch} to production for ##{repo} #scgitx"
+        post "#worklog releasing #{branch} to production for ##{project} #scgitx"
       end
 
       private
