@@ -39,7 +39,8 @@ module Socialcast
         say "Pull request created: #{url}"
 
         short_description = description.split("\n").first(5).join("\n")
-        review_message = ["#reviewrequest for #{branch} #scgitx", "/cc @SocialcastDevelopers", short_description, changelog_summary(branch)].join("\n\n")
+        project = File.basename(Dir.pwd)
+        review_message = ["#reviewrequest for #{branch} in ##{project} #scgitx", "/cc @RD", short_description, changelog_summary(branch)].join("\n\n")
         post review_message, :url => url, :message_type => 'review_request'
       end
 
@@ -98,7 +99,8 @@ module Socialcast
         run_cmd 'git pull'
         run_cmd "git checkout -b #{branch_name}"
 
-        post "#worklog starting work on #{branch_name} #scgitx"
+        project = File.basename(Dir.pwd)
+        post "#worklog starting work on #{branch_name} for ##{project} #scgitx"
       end
 
       desc 'share', 'Share the current branch in the remote repository'
@@ -115,7 +117,8 @@ module Socialcast
         integrate_branch(target_branch, 'prototype') if target_branch == 'staging'
         run_cmd "git checkout #{branch}"
 
-        post "#worklog integrating #{branch} into #{target_branch} #scgitx"
+        project = File.basename(Dir.pwd)
+        post "#worklog integrating #{branch} into #{target_branch} for ##{project} #scgitx"
       end
 
       desc 'promote', '(DEPRECATED) promote the current branch into staging'
@@ -135,8 +138,9 @@ module Socialcast
         removed_branches = nuke_branch(bad_branch, good_branch)
         nuke_branch("last_known_good_#{bad_branch}", good_branch)
 
+        project = File.basename(Dir.pwd)
         message_parts = []
-        message_parts << "#worklog resetting #{bad_branch} branch to #{good_branch} #scgitx"
+        message_parts << "#worklog resetting #{bad_branch} branch to #{good_branch} in ##{project} #scgitx"
         message_parts << "/cc @SocialcastDevelopers"
         if removed_branches.any?
           message_parts << ""
@@ -161,7 +165,8 @@ module Socialcast
         integrate_branch('master', 'staging')
         cleanup
 
-        post "#worklog releasing #{branch} to production #scgitx"
+        project = File.basename(Dir.pwd)
+        post "#worklog releasing #{branch} to production for ##{project} #scgitx"
       end
 
       private
