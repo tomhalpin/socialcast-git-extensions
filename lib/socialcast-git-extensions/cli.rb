@@ -39,7 +39,7 @@ module Socialcast
         say "Pull request created: #{url}"
 
         short_description = description.split("\n").first(5).join("\n")
-        project = File.basename(Dir.pwd)
+        project = Socialcast:Gitx:Git.current_repo
         review_message = ["#reviewrequest for #{branch} in ##{project} #scgitx", "/cc @RD", short_description, changelog_summary(branch)].join("\n\n")
         post review_message, :url => url, :message_type => 'review_request'
       end
@@ -117,7 +117,7 @@ module Socialcast
         integrate_branch(target_branch, 'prototype') if target_branch == 'staging'
         run_cmd "git checkout #{branch}"
 
-        project = File.basename(Dir.pwd)
+        project = Socialcast:Gitx:Git.current_repo
         post "#worklog integrating #{branch} into #{target_branch} for ##{project} #scgitx"
       end
 
@@ -138,7 +138,7 @@ module Socialcast
         removed_branches = nuke_branch(bad_branch, good_branch)
         nuke_branch("last_known_good_#{bad_branch}", good_branch)
 
-        project = File.basename(Dir.pwd)
+        project = Socialcast:Gitx:Git.current_repo
         message_parts = []
         message_parts << "#worklog resetting #{bad_branch} branch to #{good_branch} in ##{project} #scgitx"
         message_parts << "/cc @SocialcastDevelopers"
@@ -165,7 +165,7 @@ module Socialcast
         integrate_branch('master', 'staging')
         cleanup
 
-        project = File.basename(Dir.pwd)
+        project = Socialcast:Gitx:Git.current_repo
         post "#worklog releasing #{branch} to production for ##{project} #scgitx"
       end
 
