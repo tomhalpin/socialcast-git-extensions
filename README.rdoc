@@ -5,18 +5,18 @@
 Download Gem @ http://www.perigeeglobal.net/tools/socialcast-git-extensions-3.1.2.gem
 
 == Windows
-Install Ruby using the RubyInstaller download @ http://rubyinstaller.org/downloads/
-Install Ruby Development Kit @ http://rubyinstaller.org/downloads/ to c:\DevKit (Enable option to include Ruby in your PATH)
-Open a command prompt and execute:
+* Install Ruby using the RubyInstaller download @ http://rubyinstaller.org/downloads/
+* Install Ruby Development Kit @ http://rubyinstaller.org/downloads/ to c:/DevKit (Enable option to include Ruby in your PATH)
+* Open a command prompt and execute:
     cd c:/DevKit
     ruby dk.rb init
     ruby dk.rb install
-Change to the directory containing the gem download and execute the following
+* Change to the directory containing the gem download and execute the following
     gem install socialcast-git-extensions-3.1.2.gem
 
 == OSX
-Install Xcode, including the Command Line Utilities
-execute the following:
+* Install Xcode, including the Command Line Utilities
+* Execute the following:
     gem install socialcast-git-extensions-3.1.2.gem
 
 
