@@ -27,7 +27,7 @@ Enter your username and password when prompted.
 == Configure Github
 * It is advised to use the SSH method with Github to avoid having to store credentials in plaintext - see https://help.github.com/articles/why-is-git-always-asking-for-my-password
 * Store your Github username (used for the reviewrequest feature) by executing the following command
-    git config --global github.user _username_
+    git config --global github.user username
 
 
 = Core Git Extensions
