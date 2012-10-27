@@ -1,10 +1,10 @@
 = socialcast-git-extensions
 
-= Installation
+== Installation
 
 Download Gem @ http://www.perigeeglobal.net/tools/socialcast-git-extensions-3.1.2.gem
 
-== Windows
+=== Windows
 * Install Ruby using the RubyInstaller download @ http://rubyinstaller.org/downloads/
 * Install Ruby Development Kit @ http://rubyinstaller.org/downloads/ to c:/DevKit (Enable option to include Ruby in your PATH)
 * Open a command prompt and execute:
@@ -14,10 +14,20 @@ Download Gem @ http://www.perigeeglobal.net/tools/socialcast-git-extensions-3.1.
 * Change to the directory containing the gem download and execute the following
     gem install socialcast-git-extensions-3.1.2.gem
 
-== OSX
+=== OSX
 * Install Xcode, including the Command Line Utilities
 * Execute the following:
     gem install socialcast-git-extensions-3.1.2.gem
+
+== Configure Socialcast
+* Connect to the Perigee SocialNet community by executing the following command
+    socialcast authenticate --domain perigeeglobal-com.socialcast.com
+Enter your username and password when prompted.
+
+== Configure Github
+* It is advised to use the SSH method with Github to avoid having to store credentials in plaintext - see https://help.github.com/articles/why-is-git-always-asking-for-my-password
+* Store your Github username (used for the reviewrequest feature) by executing the following command
+    git config --global github.user _username_
 
 
 = Core Git Extensions
