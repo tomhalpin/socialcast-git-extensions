@@ -38,7 +38,7 @@ module Socialcast
         say "#{Socialcast::Gitx::BASE_BRANCH} ", :green
         say "in "
         say repo, :green
-        response = RestClient::Request.new(:url => "https://api.github.com/repos/#{repo}/pulls", :method => "POST", :payload => payload, :headers => {:accept => :json, :content_type => :json, 'Authorization' => "token #{token}"}).execute
+        response = RestClient::Request.new(:url => "https://api.github.com/repos/#{repo}/pulls", :method => "POST", :user_agent => "none-None", :payload => payload, :headers => {:accept => :json, :content_type => :json, 'Authorization' => "token #{token}"}).execute
         data = JSON.parse response.body
         url = data['html_url']
         url
