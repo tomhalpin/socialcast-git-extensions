@@ -1,4 +1,5 @@
 require 'grit'
+require 'pathname'
 
 module Socialcast
   module Gitx
@@ -27,6 +28,11 @@ module Socialcast
       def current_repo_name
         repo = `git config -z --get remote.origin.url`.strip
         repo.gsub(/\.git$/,'').split(/[:\/]/).last
+      end
+      # @returns [String] github username (ex: 'wireframe') of the current github.user
+      # @returns empty [String] when no github.user is set on the system
+      def current_user
+        `git config -z --global --get github.user`.strip
       end
 
       # retrieve a list of branches
@@ -142,6 +148,30 @@ module Socialcast
           description = File.read(f.path)
           description.gsub(/^\#.*/, '').chomp.strip
         end
+      end
+
+      # load SC Git Extensions Config YAML
+      # @returns [Hash] of configuration options from YAML file (if it exists)
+      def config
+        @config ||= begin
+          if config_file.exist?
+            YAML.load_file(config_file)
+          else
+            {}
+          end
+        end
+      end
+      
+      # @returns a [Pathname] for the scgitx.yml Config File
+      # from either ENV['SCGITX_CONFIG_PATH'] or default $PWD/config/scgitx.yml
+      def config_file
+        Pathname((ENV['SCGITX_CONFIG_PATH'] || ([Dir.pwd, '/config/scgitx.yml']).join))
+      end
+
+      # load Review buddies from the SCGITX Configuration YML
+      # @returns [Hash] of review buddy mapping from Config YML (ex: {'wireframe' => {'socialcast_username' => 'RyanSonnek', 'buddy' => 'vanm'}})
+      def review_buddies
+        config['review_buddies'] || {}
       end
     end
   end

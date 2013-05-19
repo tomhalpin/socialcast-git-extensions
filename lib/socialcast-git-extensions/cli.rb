@@ -32,6 +32,10 @@ module Socialcast
 
         update
 
+        review_mention = if buddy = socialcast_review_buddy(current_user)
+          "Assigned to @#{buddy}"
+        end
+
         description = options[:description] || editor_input(PULL_REQUEST_DESCRIPTION)
         branch = current_branch
         repo = current_repo
@@ -41,7 +45,7 @@ module Socialcast
         project = current_repo_name
         short_description = description.split("\n").first(5).join("\n")
         
-        review_message = ["#reviewrequest for #{branch} in ##{project} #scgitx", "/cc @RD", short_description, changelog_summary(branch)].join("\n\n")
+        review_message = ["#reviewrequest for #{branch} in ##{project} #scgitx", "/cc @RD", review_mention, short_description, changelog_summary(branch)].join("\n\n")
         post review_message, :url => url, :message_type => 'review_request'
       end
 
