@@ -19,6 +19,8 @@ Download Gem @ http://www.perigeeglobal.net/tools/socialcast-git-extensions-3.1.
 
 === OSX
 * Install Xcode, including the Command Line Utilities
+* Install RVM with Ruby 1.9.3 using the following command:
+    curl -L https://get.rvm.io | bash -s stable --ruby-1.9.3
 * Execute the following:
     git clone git@github.com:tomhalpin/socialcast-git-extensions.git scgitx
     cd scgitx
@@ -26,8 +28,8 @@ Download Gem @ http://www.perigeeglobal.net/tools/socialcast-git-extensions-3.1.
     gem install socialcast-git-extensions-3.1.5.gem
 
 == Configure Socialcast
-* Connect to the Perigee SocialNet community by executing the following command
-    socialcast authenticate --domain perigeeglobal-com.socialcast.com
+* Connect to the your Socialcast community by executing the following command
+    socialcast authenticate --domain <subdomain>.socialcast.com
 Enter your username and password when prompted.
 
 == Configure Github
