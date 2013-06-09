@@ -11,13 +11,19 @@ Download Gem @ http://www.perigeeglobal.net/tools/socialcast-git-extensions-3.1.
     cd c:/DevKit
     ruby dk.rb init
     ruby dk.rb install
-* Change to the directory containing the gem download and execute the following
-    gem install socialcast-git-extensions-3.1.2.gem
+* Change to another temporary folder
+    git clone git@github.com:tomhalpin/socialcast-git-extensions.git scgitx
+    cd scgitx
+    gem build socialcast-git-extensions.gemspec
+    gem install socialcast-git-extensions-3.1.5.gem
 
 === OSX
 * Install Xcode, including the Command Line Utilities
 * Execute the following:
-    gem install socialcast-git-extensions-3.1.2.gem
+    git clone git@github.com:tomhalpin/socialcast-git-extensions.git scgitx
+    cd scgitx
+    gem build socialcast-git-extensions.gemspec
+    gem install socialcast-git-extensions-3.1.5.gem
 
 == Configure Socialcast
 * Connect to the Perigee SocialNet community by executing the following command
