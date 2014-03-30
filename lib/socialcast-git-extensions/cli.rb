@@ -1,6 +1,9 @@
-require "thor"
+require 'thor'
 require 'rest_client'
 require 'socialcast-git-extensions'
+require 'socialcast'
+require 'socialcast/command_line/message'
+require 'highline/import'
 
 module Socialcast
   module Gitx
@@ -26,8 +29,10 @@ module Socialcast
 
       desc "reviewrequest", "Create a pull request on github"
       method_option :description, :type => :string, :aliases => '-d', :desc => 'pull request description'
+      method_option :additional_reviewers, :type => :string, :aliases => '-a', :desc => 'add additional reviewers to mention automatically, and skips the prompt'
+      method_option :skip_additional_reviewers, :type => :string, :aliases => '-s', :desc => 'Skips adding additional reviewers'
       # @see http://developer.github.com/v3/pulls/
-      def reviewrequest
+      def reviewrequest(*additional_reviewers)
         token = authorization_token
 
         update
@@ -36,10 +41,29 @@ module Socialcast
           "Assigned to @#{buddy}"
         end
 
+        if !specialty_reviewers.empty? && !options.key?('skip_additional_reviewers')
+          additional_reviewers = options[:additional_reviewers] || additional_reviewers
+
+          if additional_reviewers.empty?
+            prompt_text = "#{specialty_reviewers.map { |_,v| v['command'] }.join(", ")} or (or hit enter to continue): "
+            additional_reviewers = $terminal.ask("Notify additional people? #{prompt_text} ")
+          end
+
+          additional_reviewers = additional_reviewers.is_a?(String) ? additional_reviewers.split(" ") : additional_reviewers
+
+          (specialty_reviewers.keys & additional_reviewers).each do |command|
+            reviewer = specialty_reviewers[command]
+            review_mention = review_mention || ''
+            review_mention += "\nAssigned additionally to @#{reviewer['socialcast_username']} for #{reviewer['label']} review"
+          end
+        end
+
+        assignee = github_review_buddy(current_user)
+
         description = options[:description] || editor_input(PULL_REQUEST_DESCRIPTION)
         branch = current_branch
         repo = current_repo
-        url = create_pull_request token, branch, repo, description
+        url = create_pull_request token, branch, repo, description, assignee
         say "Pull request created: #{url}"
 
         project = current_repo_name
@@ -47,6 +71,22 @@ module Socialcast
         
         review_message = ["#reviewrequest for #{branch} in ##{project} #scgitx", "/cc @RD", review_mention, short_description, changelog_summary(branch)].join("\n\n")
         post review_message, :url => url, :message_type => 'review_request'
+      end
+
+      desc "findpr", "Find pull requests including a given commit"
+      def findpr(commit_hash)
+        token = authorization_token
+        repo = current_repo
+        data = pull_requests_for_commit(token, repo, commit_hash)
+
+        if data['items']
+          data['items'].each do |entry|
+            say "\n" << [entry['html_url'], entry['title'], "#{entry['user'] && entry['user']['login']} #{entry['created_at']}"].join("\n\t")
+          end
+        else
+          say "No results found", :yellow
+        end
+
       end
 
       # TODO: use --no-edit to skip merge messages
@@ -58,26 +98,26 @@ module Socialcast
         say 'updating '
         say "#{branch} ", :green
         say "to have most recent changes from "
-        say Socialcast::Gitx::BASE_BRANCH, :green
+        say base_branch, :green
 
         run_cmd "git pull origin #{branch}" rescue nil
-        run_cmd "git pull origin #{Socialcast::Gitx::BASE_BRANCH}"
+        run_cmd "git pull origin #{base_branch}"
         run_cmd 'git push origin HEAD'
       end
 
       desc 'cleanup', 'Cleanup branches that have been merged into master from the repo'
       def cleanup
-        run_cmd "git checkout #{Socialcast::Gitx::BASE_BRANCH}"
+        run_cmd "git checkout #{base_branch}"
         run_cmd "git pull"
         run_cmd 'git remote prune origin'
 
         say "Deleting branches that have been merged into "
-        say Socialcast::Gitx::BASE_BRANCH, :green
+        say base_branch, :green
         branches(:merged => true, :remote => true).each do |branch|
-          run_cmd "git push origin --delete #{branch}" unless aggregate_branch?(branch)
+          run_cmd "git push origin --delete #{branch}" unless reserved_branch?(branch)
         end
         branches(:merged => true).each do |branch|
-          run_cmd "git branch -d #{branch}" unless aggregate_branch?(branch)
+          run_cmd "git branch -d #{branch}" unless reserved_branch?(branch)
         end
       end
 
@@ -89,18 +129,17 @@ module Socialcast
       desc 'start', 'start a new git branch with latest changes from master'
       def start(branch_name = nil)
         unless branch_name
-          example_branch = %w{ api-fix-invalid-auth desktop-cleanup-avatar-markup share-form-add-edit-link }.sort_by { rand }.first
+          example_branch = %w{ cpr-3922-api-fix-invalid-auth red-212-desktop-cleanup-avatar-markup red-3212-share-form-add-edit-link }.sample
           repo = Grit::Repo.new(Dir.pwd)
           remote_branches = repo.remotes.collect {|b| b.name.split('/').last }
-          until branch_name = ask("What would you like to name your branch? (ex: #{example_branch})") {|q|
-              q.validate = Proc.new { |branch|
-                branch =~ /^[A-Za-z0-9\-_]+$/ && !remote_branches.include?(branch)
-              }
-            }
+          ## Explicitly use Highline.ask
+          branch_name = $terminal.ask("What would you like to name your branch? (ex: #{example_branch})") do |q|
+            q.validate = lambda { |branch| branch =~ /^[A-Za-z0-9\-_]+$/ && !remote_branches.include?(branch) }
+            q.responses[:not_valid] = "This branch name is either already taken, or is not a valid branch name"
           end
         end
 
-        run_cmd "git checkout #{Socialcast::Gitx::BASE_BRANCH}"
+        run_cmd "git checkout #{base_branch}"
         run_cmd 'git pull'
         run_cmd "git checkout -b #{branch_name}"
         project = current_repo_name
@@ -113,13 +152,13 @@ module Socialcast
       end
 
       desc 'integrate', 'integrate the current branch into one of the aggregate development branches'
-      def integrate(target_branch = 'prototype')
+      def integrate(target_branch = prototype_branch)
         branch = current_branch
         project = current_repo_name
 
         update
         integrate_branch(branch, target_branch)
-        integrate_branch(target_branch, 'prototype') if target_branch == 'staging'
+        integrate_branch(target_branch, prototype_branch) if target_branch == staging_branch
         run_cmd "git checkout #{branch}"
 
         post "#worklog integrating #{branch} into #{target_branch} for ##{project} #scgitx"
@@ -127,8 +166,8 @@ module Socialcast
 
       desc 'promote', '(DEPRECATED) promote the current branch into staging'
       def promote
-        say 'DEPRECATED: Use `git integrate staging` instead', :red
-        integrate 'staging'
+        say "DEPRECATED: Use `git integrate #{staging_branch}` instead", :red
+        integrate staging_branch
       end
 
       desc 'nuke', 'nuke the specified aggregate branch and reset it to a known good state'
@@ -163,14 +202,14 @@ module Socialcast
         return unless yes?("Release #{branch} to production? (y/n)", :green)
 
         update
-        run_cmd "git checkout #{Socialcast::Gitx::BASE_BRANCH}"
-        run_cmd "git pull origin #{Socialcast::Gitx::BASE_BRANCH}"
+        run_cmd "git checkout #{base_branch}"
+        run_cmd "git pull origin #{base_branch}"
         run_cmd "git pull . #{branch}"
         run_cmd "git push origin HEAD"
-        integrate_branch('master', 'staging')
+        integrate_branch(base_branch, staging_branch)
         cleanup
 
-        post "#worklog releasing #{branch} to production for ##{project} #scgitx"
+        post "#worklog releasing #{branch} to #{base_branch} for ##{project} #scgitx"
       end
 
       private
@@ -179,12 +218,10 @@ module Socialcast
       # skip sharing message if CLI quiet option is present
       def post(message, params = {})
         return if options[:quiet]
-        require 'socialcast'
-        require 'socialcast/message'
         ActiveResource::Base.logger = Logger.new(STDOUT) if options[:trace]
-        Socialcast::Message.configure_from_credentials
-        Socialcast::Message.create params.merge(:body => message)
-        say "Message has been posted"
+        Socialcast::CommandLine::Message.configure_from_credentials
+        response = Socialcast::CommandLine::Message.create params.merge(:body => message)
+        say "Message has been posted: #{response.permalink_url}"
       end
     end
   end
